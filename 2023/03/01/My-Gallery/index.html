@@ -29,7 +29,109 @@
         <hr>
     </div>
     <div class="post-content">
-        
+        <p>首先在pom.xml中引入：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">profiles</span>&gt;</span></span><br><span class="line">    <span class="comment">&lt;!--公司测试环境Mysql--&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">profile</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>testmysql<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">properties</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">profiles.active</span>&gt;</span>testmysql<span class="tag">&lt;/<span class="name">profiles.active</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">properties</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">activation</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">activeByDefault</span>&gt;</span>true<span class="tag">&lt;/<span class="name">activeByDefault</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">activation</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">profile</span>&gt;</span></span><br><span class="line">    <span class="comment">&lt;!--公司测试环境Oracle--&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">profile</span>&gt;</span></span><br><span class="line">        `<span class="tag">&lt;<span class="name">id</span>&gt;</span>testoracle<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">        `<span class="tag">&lt;<span class="name">properties</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">profiles.active</span>&gt;</span>testoracle<span class="tag">&lt;/<span class="name">profiles.active</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">properties</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">profile</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">profiles</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>然后在application.yml中添加<br>spring:<br>  profiles:<br>    active:</p>
+<pre><code>  - @profiles.active@
+</code></pre>
+<p>为了支持@profiles.active@，需要在pom.xml中添加</p>
+<resources>
+    <resource>
+        <directory>src/main/resources</directory>
+        <!--解决找不到@profiles.active@-->
+        <filtering>true</filtering>
+    </resource>
+</resources>
+最后可以在Maven插件Profiles中选择生效配置
+只要选中后，不管打包和IDEA启动项目，都是按照选择的配置
+
+
+<p>注意事项：<br>如果是接口使用https，用到证书，项目启动时出现tomcat启动失败，报错项目启动 DerInputStream.getLength(): lengthTag&#x3D;111, too big.<br>在pom.xml中添加插件</p>
+<plugin>
+    <artifactId>maven-resources-plugin</artifactId>
+    <version>3.2.0</version>
+    <configuration>
+        <encoding>utf-8</encoding>
+        <!-- 解决Spring boot引起的profile失效问题 -->
+        <useDefaultDelimiters>true</useDefaultDelimiters>
+        <!-- 过滤后缀为p12、pem、pfx的证书文件 -->
+        <nonFilteredFileExtensions>
+            <nonFilteredFileExtension>p12</nonFilteredFileExtension>
+            <nonFilteredFileExtension>cer</nonFilteredFileExtension>
+            <nonFilteredFileExtension>pem</nonFilteredFileExtension>
+            <nonFilteredFileExtension>pfx</nonFilteredFileExtension>
+            <nonFilteredFileExtension>jkx</nonFilteredFileExtension>
+        </nonFilteredFileExtensions>
+    </configuration>
+</plugin>
+
+<p>如果报错found character ‘@’ that cannot start any token. (Do not use @ for indentation)<br>在terminal中，项目的目录下运行</p>
+<p>mvn spring-boot:run<br>或者maven插件处刷新</p>
+<p>pom.xml整个 <build>和<profiles><br> <build><br>        <!--解决找不到@profile.active@--><br>        <resources><br>            <resource><br>                <directory>src&#x2F;main&#x2F;resources</directory><br>                <!--解决找不到@profile.active@--><br>                <filtering>true</filtering><br>            </resource><br>        </resources></p>
+<pre><code>    &lt;plugins&gt;
+        &lt;!-- springboot 打包插件spring-boot-maven-plugin --&gt;
+        &lt;plugin&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+            &lt;configuration&gt;
+                &lt;includeSystemScope&gt;true&lt;/includeSystemScope&gt;
+                &lt;excludes&gt;
+                    &lt;exclude&gt;
+                        &lt;groupId&gt;org.projectlombok&lt;/groupId&gt;
+                        &lt;artifactId&gt;lombok&lt;/artifactId&gt;
+                    &lt;/exclude&gt;
+                &lt;/excludes&gt;
+            &lt;/configuration&gt;
+        &lt;/plugin&gt;
+
+
+
+        &lt;!-- 这个插件的作用是在maven编译打包项目的时候忽略指定后缀的文件，秘钥如果不忽略就会被编译，编译后就会出问题； --&gt;
+        &lt;plugin&gt;
+            &lt;artifactId&gt;maven-resources-plugin&lt;/artifactId&gt;
+            &lt;version&gt;3.2.0&lt;/version&gt;
+            &lt;configuration&gt;
+                &lt;encoding&gt;utf-8&lt;/encoding&gt;
+                &lt;!-- 解决Spring boot引起的profile失效问题 --&gt;
+                &lt;useDefaultDelimiters&gt;true&lt;/useDefaultDelimiters&gt;
+                &lt;!-- 过滤后缀为p12、pem、pfx的证书文件 --&gt;
+                &lt;nonFilteredFileExtensions&gt;
+                    &lt;nonFilteredFileExtension&gt;p12&lt;/nonFilteredFileExtension&gt;
+                    &lt;nonFilteredFileExtension&gt;cer&lt;/nonFilteredFileExtension&gt;
+                    &lt;nonFilteredFileExtension&gt;pem&lt;/nonFilteredFileExtension&gt;
+                    &lt;nonFilteredFileExtension&gt;pfx&lt;/nonFilteredFileExtension&gt;
+                    &lt;nonFilteredFileExtension&gt;jkx&lt;/nonFilteredFileExtension&gt;
+                &lt;/nonFilteredFileExtensions&gt;
+            &lt;/configuration&gt;
+        &lt;/plugin&gt;
+&lt;/build&gt;
+
+
+
+&lt;!--配置环境映射--&gt;
+&lt;profiles&gt;
+    &lt;!--公司测试环境Mysql--&gt;
+    &lt;profile&gt;
+        &lt;id&gt;testmysql&lt;/id&gt;
+        &lt;properties&gt;
+            &lt;profiles.active&gt;testmysql&lt;/profiles.active&gt;
+        &lt;/properties&gt;
+        &lt;activation&gt;
+            &lt;activeByDefault&gt;true&lt;/activeByDefault&gt;
+        &lt;/activation&gt;
+    &lt;/profile&gt;
+    &lt;!--公司测试环境Oracle--&gt;
+    &lt;profile&gt;
+        &lt;id&gt;testoracle&lt;/id&gt;
+        &lt;properties&gt;
+            &lt;profiles.active&gt;testoracle&lt;/profiles.active&gt;
+        &lt;/properties&gt;
+    &lt;/profile&gt;
+&lt;/profiles&gt;
+</code></pre>
+</project>
+
     </div>
 
     
